@@ -40,7 +40,7 @@ class RBTree:
         raise KeyError('There is no such key.')
 
     def __setitem__(self, key, value):
-        pass
+        self.insert(key, value)
 
     def __delitem__(self, key):
         pass
@@ -88,15 +88,50 @@ class RBTree:
         self.size += 1
 
     def delete(self, key):
-        pass
+        result, node = self.search(key)
+        if result is None:
+            raise KeyError(f'Key {key} does not exist.')
+
+        if node.left == node.right:  # only both of node's children are None can this comparison hold
+            next_node = self._next_node(node)
+            node.key, node.value = next_node.key, next_node.value
+            node = next_node
+
+        self.size -= 1
+        if not self.size:  # ie. deleting the root, but revise this paragraph's necessity after completing 'delete'
+            self.root = None
+            return
+
+        child = node.left if node.left else node.right
+        self._relink(node.parent, child, node == node.parent.right)
+        if not node.is_red:
+            # fix unbalanced red-black tree property
+            pass
 
     def replace(self, key, value):
-        pass
+        result, node = self.search(key)
+        if result:
+            node.value = value
+        else:
+            raise KeyError(f'Key {key} does not exist.')
 
     def _sibling(self, node):
         if node == self.root:
             raise NoSiblingError('Current node is a root. No sibling for a root.')
         return node.parent.left if node == node.parent.right else node.parent.right
+
+    @staticmethod
+    def _next_node(node):
+        if node.right:
+            next_node = node.right
+            while next_node.left:
+                next_node = next_node.left
+            return next_node
+        while node.parent:
+            if node == node.parent.left:
+                return node.parent
+            node = node.parent
+        return None
 
     def _rotate(self, g_parent, parent, child, new_child_is_red=True):
         # Parameter 'new_child_is_red' is designed to compatible for both insertion and deletion.
@@ -171,3 +206,6 @@ if __name__ == '__main__':
     t.insert(8, al[8])
     print('len:', len(t), ',', t)
     t.show_structure()
+
+    result, node = t.search(20)
+    print('\n', t._next_node(node), sep='')

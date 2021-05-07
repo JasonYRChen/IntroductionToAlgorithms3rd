@@ -1,3 +1,7 @@
+class NoSiblingError(Exception):
+    pass
+
+
 class RBTree:
     class _Node:
         __slots__ = 'key', 'value', 'parent', 'left', 'right', 'is_red'
@@ -62,21 +66,28 @@ class RBTree:
             node.left = self._Node(key, value, node)
             child = node.left
 
-        while node.is_red:
-            if node.parent.left.is_red and node.parent.right.is_red:
+        while child.is_red and node.is_red:
+            sibling = self._sibling(node)
+            if sibling is not None and sibling.is_red:
                 node.parent.left.is_red = False
                 node.parent.right.is_red = False
                 if node.parent != self.root:
                     node.parent.is_red = True
-                node = node.parent
+                node, child = node.parent.parent, node.parent
             else:
-                pass
+                self._rotate(node.parent, node, child)
+                break
 
     def delete(self, key):
         pass
 
     def replace(self, key, value):
         pass
+
+    def _sibling(self, node):
+        if node == self.root:
+            raise NoSiblingError('Current node is a root. No sibling for a root.')
+        return node.parent.left if node == node.parent.right else node.parent.right
 
     def _rotate(self, g_parent, parent, child, new_child_is_red=True):
         # Parameter 'new_child_is_red' is designed to compatible for both insertion and deletion.
@@ -124,3 +135,7 @@ class RBTree:
         yield node
         if node.right:
             yield from self._inorder_list(node.right)
+
+
+if __name__ == '__main__':
+    pass

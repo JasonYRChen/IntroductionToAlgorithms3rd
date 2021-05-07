@@ -78,13 +78,38 @@ class RBTree:
     def replace(self, key, value):
         pass
 
-    def _rotate(self, g_parent, parent, child):
+    def _rotate(self, g_parent, parent, child, new_child_is_red=True):
+        # Parameter 'new_child_is_red' is designed to compatible for both insertion and deletion.
+        # This parameter represents the children's color after rotation to be filled in.
         if not ((parent == g_parent.left and child == parent.left) or
                 (parent == g_parent.right and child == parent.right)):
             is_right = child == parent.right
+            self._relink(g_parent, child, not is_right)
+            if is_right:
+                self._relink(parent, child.left, is_right)
+                self._relink(child, parent, not is_right)
+            else:
+                self._relink(parent, child.right, is_right)
+                self._relink(child, parent, not is_right)
+            parent, child = child, parent
+        is_right = child == parent.right
+        self._relink(g_parent.parent, parent, True if g_parent.parent and g_parent == g_parent.parent.right else False)
+        self._relink(g_parent, parent.left, is_right)
+        self._relink(parent, g_parent, not is_right)
+        parent.is_red = g_parent.is_red
+        g_parent.is_red = new_child_is_red
+        child.is_red = new_child_is_red
 
     def _relink(self, parent, child, is_right):
-        pass
+        if parent:
+            if is_right:
+                parent.right = child
+            else:
+                parent.left = child
+        else:
+            self.root = child
+        if child:
+            child.parent = parent
 
     def _preorder_list(self, node, level=0):
         yield level, node

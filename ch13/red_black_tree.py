@@ -14,6 +14,13 @@ class RBTree:
             self.right = right
             self.is_red = is_red
 
+        def __repr__(self):
+            return f"Node(k={self.key}, v={self.value}, " \
+                   f"p={self.parent.key if self.parent else None}, " \
+                   f"l={self.left.key if self.left else None}, " \
+                   f"r={self.right.key if self.right else None}, " \
+                   f"is_red={self.is_red})"
+
     def __init__(self):
         self.size = 0
         self.root = None
@@ -22,7 +29,7 @@ class RBTree:
         return self.size
 
     def __repr__(self):
-        k_v = [f"{node.key}:{node.value}" for node in self._inorder_list(self.root)]
+        k_v = [f"{node.key}:{node.value}" for node in self._inorder_list(self.root)] if self.root else []
         k_v = str(k_v)[1:-1]
         return f"RBTree({k_v})"
 
@@ -54,6 +61,7 @@ class RBTree:
     def insert(self, key, value):
         if self.root is None:
             self.root = self._Node(key, value, is_red=False)
+            self.size += 1
             return
 
         result, node = self.search(key)
@@ -77,6 +85,7 @@ class RBTree:
             else:
                 self._rotate(node.parent, node, child)
                 break
+        self.size += 1
 
     def delete(self, key):
         pass
@@ -105,7 +114,10 @@ class RBTree:
             parent, child = child, parent
         is_right = child == parent.right
         self._relink(g_parent.parent, parent, True if g_parent.parent and g_parent == g_parent.parent.right else False)
-        self._relink(g_parent, parent.left, is_right)
+        if is_right:
+            self._relink(g_parent, parent.left, is_right)
+        else:
+            self._relink(g_parent, parent.right, is_right)
         self._relink(parent, g_parent, not is_right)
         parent.is_red = g_parent.is_red
         g_parent.is_red = new_child_is_red
@@ -124,9 +136,9 @@ class RBTree:
 
     def _preorder_list(self, node, level=0):
         yield level, node
-        if node.left:
+        if node and node.left:
             yield from self._preorder_list(node.left, level+1)
-        if node.right:
+        if node and node.right:
             yield from self._preorder_list(node.right, level+1)
 
     def _inorder_list(self, node):
@@ -136,6 +148,26 @@ class RBTree:
         if node.right:
             yield from self._inorder_list(node.right)
 
+    def show_structure(self):
+        for level, node in self._preorder_list(self.root):
+            print(' '*level*2, node, sep='')
+
 
 if __name__ == '__main__':
-    pass
+    from string import ascii_letters as al
+
+    t = RBTree()
+    t.insert(5, al[5])
+    t.insert(2, al[2])
+    t.insert(3, al[3])
+    t.insert(1, al[1])
+    t.insert(1.5, al[1])
+    t.insert(10, al[10])
+    t.insert(20, al[20])
+    t.insert(7, al[7])
+    t.insert(9, al[9])
+    t.insert(0, al[0])
+
+    t.insert(8, al[8])
+    print('len:', len(t), ',', t)
+    t.show_structure()

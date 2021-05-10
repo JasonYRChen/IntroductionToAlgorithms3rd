@@ -49,7 +49,7 @@ class RBTree:
         node = temp = self.root
         while temp is not None:
             if temp.key == key:
-                return temp, temp
+                return True, temp
 
             node = temp
             if temp.key > key:
@@ -92,7 +92,7 @@ class RBTree:
         if result is None:
             raise KeyError(f'Key {key} does not exist.')
 
-        if node.left == node.right:  # only both of node's children are None can this comparison hold
+        if node.left is not None and node.right is not None:  # if node has two children
             next_node = self._next_node(node)
             node.key, node.value = next_node.key, next_node.value
             node = next_node
@@ -102,11 +102,35 @@ class RBTree:
             self.root = None
             return
 
-        child = node.left if node.left else node.right
-        self._relink(node.parent, child, node == node.parent.right)
+        sibling = self._sibling(node)
+        self._relink(node.parent, node.left if node.left else node.right, True if node.parent and node == node.parent.right else False)
         if not node.is_red:
-            # fix unbalanced red-black tree property
-            pass
+            while node and node != self.root and sibling:
+                # First deal with red sibling case
+                if sibling.is_red:
+                    is_right = sibling == sibling.parent.right
+                    sibling.is_red = False
+                    sibling.parent.is_red = True
+                    s_parent = sibling.parent
+                    s_child = sibling.left if is_right else sibling.right
+                    self._relink(s_parent.parent, sibling,
+                                 True if s_parent.parent and sibling.parent == s_parent.parent.right else False)
+                    self._relink(s_parent, s_child, is_right)x
+                    self._relink(sibling, s_parent, not is_right)
+                    sibling = s_child
+                if (sibling.left and sibling.left.is_red) or (sibling.right and sibling.right.is_red):
+                    child = sibling.left if sibling.left and sibling.left.is_red else sibling.right
+                    self._rotate(sibling.parent, sibling, child, False)
+                    node = None
+                else:
+                    if sibling.parent.is_red:
+                        sibling.parent.is_red = False
+                        sibling.is_red = True
+                        node = None
+                    else:
+                        sibling.is_red = True
+                        node = sibling.parent
+                        sibling = self._sibling(node)
 
     def replace(self, key, value):
         result, node = self.search(key)
@@ -117,7 +141,7 @@ class RBTree:
 
     def _sibling(self, node):
         if node == self.root:
-            raise NoSiblingError('Current node is a root. No sibling for a root.')
+            return None
         return node.parent.left if node == node.parent.right else node.parent.right
 
     @staticmethod
@@ -166,6 +190,7 @@ class RBTree:
                 parent.left = child
         else:
             self.root = child
+            self.root.is_red = False
         if child:
             child.parent = parent
 
@@ -207,5 +232,19 @@ if __name__ == '__main__':
     print('len:', len(t), ',', t)
     t.show_structure()
 
-    result, node = t.search(20)
-    print('\n', t._next_node(node), sep='')
+    # result, node = t.search(20)
+    # print('\n', t._next_node(node), sep='')
+    t.delete(2)
+    t.delete(1)
+    t.delete(7)
+    t.delete(8)
+    t.delete(9)
+    t.delete(1.5)
+    t.delete(5)
+    t.delete(0)
+    t.delete(3)
+    t.delete(10)
+    t.delete(20)
+    print('\n', 'len:', len(t), ',', t, sep='')
+    print('root:', t.root)
+    t.show_structure()

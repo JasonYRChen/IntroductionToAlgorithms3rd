@@ -1,5 +1,19 @@
+"""
+This is not the final code for a graph. An ideal graph should be O(1) operation
+among the following action:
+1. Add a vertex
+2. Add an edge
+3. Delete a vertex (the corresponding edges should also be deleted)
+4. Delete an adge
+5. Lookup for a vertex
+6. Lookup for an edge
+
+This version has not achieved the 3rd operation.
+"""
+
+
 class Vertex:
-    __slots__ = 'key', 'incident_edge', 'outgoing_edge'
+    __slots__ = 'key'
 
     def __init__(self, key):
         self.key = key
@@ -142,5 +156,6 @@ if __name__ == '__main__':
     pprint(g)
     pprint(g.edge_between_vertices(g.vertex(1), g.vertex(3)))
     pprint(g.edge_between_vertices(g.vertex(3), g.vertex(1)))
-    g.delete_edge(g.vertex(1), g.vertex(-3), True)
+    g.delete_edge(g.vertex(1), g.vertex(3), True)
+    g.delete_edge(g.vertex(3), g.vertex(1), True)
     pprint(g)

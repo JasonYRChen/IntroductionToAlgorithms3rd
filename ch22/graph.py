@@ -71,6 +71,14 @@ class Graph:
     def __repr__(self):
         return self.__str__()
 
+    def edge_hash(self, head_vertex, end_vertex, directed):
+        if directed:
+            edge_hash = hash((head_vertex, end_vertex, directed))
+        else:
+            edge_hash = hash((hash((head_vertex, end_vertex, directed)) + 
+                              hash((end_vertex, head_vertex, directed))))
+        return edge_hash
+
     def add_vertex(self, key):
         if key in self.vertices:
             raise KeyError(f'Vertex({key}) is already in the graph.')
@@ -84,26 +92,41 @@ class Graph:
         edge = Edge(head_vertex, end_vertex, directed)
         self.edges[hash(edge)] = edge
 
+    def delete_vertex(self, key):
+        pass
+
+    def delete_edge(self, head_vertex, end_vertex, directed):
+        edge_hash = self.edge_hash(head_vertex, end_vertex, directed)
+        if edge_hash not in self.edges:
+            raise KeyError(f'{Edge(head_vertex, end_vertex, directed)} does not exist.')
+        del self.edges[edge_hash]
+
     def vertex(self, key):
         if key not in self.vertices:
             raise KeyError(f'Vertex({key}) is not in the graph.')
         return self.vertices[key]
 
-    def edge(self, vertex1, vertex2, directed):
-        edge_hash = self.edge_hash(vertex1=vertex1, vertex2=vertex2, directed=directed)
+    def edge(self, head_vertex, end_vertex, directed):
+        edge_hash = self.edge_hash(head_vertex, end_vertex, directed)
         if edge_hash not in self.edges:
-            raise KeyError(f'{Edge(vertex1, vertex2, directed)} does not in the graph')
+            raise KeyError(f'{Edge(head_vertex, end_vertex, directed)} does not in the graph')
         return self.edges[edge_hash]
 
-    def edge_hash(self, edge=None, vertex1=None, vertex2=None, directed=None):
-        if edge:
-            return hash(edge)
-        if directed:
-            edge_hash = hash((vertex1, vertex2, directed))
-        else:
-            edge_hash = hash((hash((vertex1, vertex2, directed)) + 
-                              hash((vertex2, vertex1, directed))))
-        return edge_hash
+    def vertex_length(self):
+        return len(self.vertices)
+
+    def edge_length(self):
+        return len(self.edges)
+
+    def edge_between_vertices(self, head_vertex, end_vertex):
+        edges = set()
+        edge_hashes = [self.edge_hash(head_vertex, end_vertex, True),
+                       self.edge_hash(end_vertex, head_vertex, True),
+                       self.edge_hash(head_vertex, end_vertex, False)]
+        for edge_hash in edge_hashes:
+            if edge_hash in self.edges:
+                edges.add(self.edges[edge_hash])
+        return edges
 
 
 if __name__ == '__main__':
@@ -116,8 +139,8 @@ if __name__ == '__main__':
     # print(g)
     g.add_edge(g.vertex(1), g.vertex(3))
     g.add_edge(g.vertex(3), g.vertex(1))
-    g.add_edge(g.vertex(1), g.vertex(3), False)
     pprint(g)
-
-    pprint(g.edge(g.vertex(1), g.vertex(-12), False))
-
+    pprint(g.edge_between_vertices(g.vertex(1), g.vertex(3)))
+    pprint(g.edge_between_vertices(g.vertex(3), g.vertex(1)))
+    g.delete_edge(g.vertex(1), g.vertex(-3), True)
+    pprint(g)

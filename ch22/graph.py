@@ -15,21 +15,29 @@ class Vertex:
 
 
 class Edge:
-    __slots__ = 'head_vertex', 'end_vertex'
+    __slots__ = 'head_vertex', 'end_vertex', 'directed'
 
-    def __init__(self, head_vertex, end_vertex):
+    def __init__(self, head_vertex, end_vertex, directed=True):
         self.head_vertex = head_vertex
         self.end_vertex = end_vertex
+        self.directed = directed
 
     def __str__(self):
-        string = f'Edge(head={self.head_vertex}, end={self.end_vertex})'
+        string = f'Edge(head={self.head_vertex}, ' \
+                 f'end={self.end_vertex}, ' \
+                 f'directed={self.directed})'
         return string
 
     def __repr__(self):
         return self.__str__()
 
     def __hash__(self):
-        return hash((self.head_vertex, self.end_vertex))
+        if self.directed:
+            edge_hash = hash((self.head_vertex, self.end_vertex, self.directed))
+        else:
+            edge_hash = hash((hash((self.head_vertex, self.end_vertex, self.directed)) + 
+                              hash((self.end_vertex, self.head_vertex, self.directed))))
+        return edge_hash
 
     def opposite(self, vertex):
         if vertex != self.head_vertex and vertex != self.end_vertex:
@@ -39,16 +47,15 @@ class Edge:
     def endpoints(self):
         return self.head_vertex, self.end_vertex
 
+    def is_directed(self):
+        return self.directed
+
 
 class Graph:
     """
 
-    Graph.vertices is a structure of {Vertex1:{True: set(), False: set()}, Vertex2:...}.
-    Inside a vertex is another dictionary which contains two sets, one for containing
-    outgoing edges (key 'True'), the other for incident edges (key 'False').
-
-    If one edge is an undirected edge, it will be saved in the 'True' set inside the 
-    head_vertex of self.vertices.
+    self.vertices = {key: Vertex}
+    self.edges = {hash(Vertex1, Vertex2, directed): Edge}
 
     """
 
@@ -66,28 +73,51 @@ class Graph:
 
     def add_vertex(self, key):
         if key in self.vertices:
-            raise KeyError(f'{key} has already in graph.')
-        self.vertices[key] = {True: set(), False: set()}
+            raise KeyError(f'Vertex({key}) is already in the graph.')
+        vertex = Vertex(key)
+        self.vertices[key] = vertex
 
-    def add_edge(self, head_vertex, end_vertex, outgoing_edge=True):
+    def add_edge(self, head_vertex, end_vertex, directed=True):
         for vertex in [head_vertex, end_vertex]:
-            if vertex not in self.vertices:
+            if vertex.key not in self.vertices:
                 raise KeyError(f'{vertex} is not in the graph')
-        edge = Edge(head_vertex, end_vertex)
-        self.edge[edge] = edge
-        self.vertices[head_vertex][True].add(edge)
-        self.vertices[end_vertex][outgoing_edge].add(edge)
+        edge = Edge(head_vertex, end_vertex, directed)
+        self.edges[hash(edge)] = edge
+
+    def vertex(self, key):
+        if key not in self.vertices:
+            raise KeyError(f'Vertex({key}) is not in the graph.')
+        return self.vertices[key]
+
+    def edge(self, vertex1, vertex2, directed):
+        edge_hash = self.edge_hash(vertex1=vertex1, vertex2=vertex2, directed=directed)
+        if edge_hash not in self.edges:
+            raise KeyError(f'{Edge(vertex1, vertex2, directed)} does not in the graph')
+        return self.edges[edge_hash]
+
+    def edge_hash(self, edge=None, vertex1=None, vertex2=None, directed=None):
+        if edge:
+            return hash(edge)
+        if directed:
+            edge_hash = hash((vertex1, vertex2, directed))
+        else:
+            edge_hash = hash((hash((vertex1, vertex2, directed)) + 
+                              hash((vertex2, vertex1, directed))))
+        return edge_hash
 
 
 if __name__ == '__main__':
-    v1 = Vertex(1)
-    v2 = Vertex(2)
-    v3 = Vertex(3)
-    v4 = Vertex(1)
-    e1 = Edge(v1, v2)
-    e2 = Edge(v1, v2)
+    from pprint import pprint
+
     g = Graph()
     g.add_vertex(1)
-    g.add_vertex(1)
-    print(g)
+    g.add_vertex(3)
+    g.add_vertex(-12)
+    # print(g)
+    g.add_edge(g.vertex(1), g.vertex(3))
+    g.add_edge(g.vertex(3), g.vertex(1))
+    g.add_edge(g.vertex(1), g.vertex(3), False)
+    pprint(g)
+
+    pprint(g.edge(g.vertex(1), g.vertex(-12), False))
 
